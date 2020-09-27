@@ -239,6 +239,7 @@ size_t Keyboard_::press(uint8_t k)
 		}
 		if (k & 0x80) {						// it's a capital letter or other character reached with shift
 			_keyReport.modifiers |= 0x02;	// the left shift modifier
+			sendReport(&_keyReport);        // send the shift key by itself
 			k &= 0x7F;
 		}
 	}
@@ -270,6 +271,7 @@ size_t Keyboard_::press(uint8_t k)
 size_t Keyboard_::release(uint8_t k) 
 {
 	uint8_t i;
+	bool has_shift = false;
 	if (k >= 136) {			// it's a non-printing key (not a modifier)
 		k = k - 136;
 	} else if (k >= 128) {	// it's a modifier key
@@ -281,7 +283,7 @@ size_t Keyboard_::release(uint8_t k)
 			return 0;
 		}
 		if (k & 0x80) {							// it's a capital letter or other character reached with shift
-			_keyReport.modifiers &= ~(0x02);	// the left shift modifier
+			has_shift = true;			// this variable is later used to release the shift key after releasing the character button
 			k &= 0x7F;
 		}
 	}
@@ -295,6 +297,10 @@ size_t Keyboard_::release(uint8_t k)
 	}
 
 	sendReport(&_keyReport);
+	if (has_shift) {
+		_keyReport.modifiers &= ~(0x02);	// the left shift modifier
+		sendReport(&_keyReport);		// release shift after releasing the character button
+	}
 	return 1;
 }
 
